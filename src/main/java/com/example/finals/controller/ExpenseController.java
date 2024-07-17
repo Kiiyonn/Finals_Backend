@@ -1,19 +1,28 @@
 package com.example.finals.controller;
 
-import com.example.finals.model.ExpenseDTO;
-import com.example.finals.model.Expense;
-import com.example.finals.model.User;
-import com.example.finals.service.ExpenseService;
-import com.example.finals.service.UserService;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import com.example.finals.model.Expense;
+import com.example.finals.model.ExpenseDTO;
+import com.example.finals.model.User;
+import com.example.finals.service.ExpenseService;
+import com.example.finals.service.UserService;
 
+// Controller class for handling expense-related API requests
 @RestController
 @RequestMapping("/api/expenses")
 public class ExpenseController {
@@ -24,6 +33,7 @@ public class ExpenseController {
     @Autowired
     private UserService userService;
 
+    // Get all expenses for the logged-in user
     @GetMapping
     public List<ExpenseDTO> getAllExpenses(@AuthenticationPrincipal UserDetails userDetails) {
         List<Expense> expenses = expenseService.findAllExpensesForUser(userDetails.getUsername());
@@ -32,6 +42,7 @@ public class ExpenseController {
                 .collect(Collectors.toList());
     }
 
+    // Create a new expense for the logged-in user
     @PostMapping
     public ResponseEntity<?> createExpense(@RequestBody ExpenseDTO expenseDTO, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.findUserByUsername(userDetails.getUsername());
@@ -49,6 +60,7 @@ public class ExpenseController {
         return ResponseEntity.ok(new ExpenseDTO(savedExpense.getId(), savedExpense.getAmount(), savedExpense.getDescription(), savedExpense.getDate(), savedExpense.getUser().getId()));
     }
 
+    // Update an existing expense for the logged-in user
     @PutMapping("/{id}")
     public ResponseEntity<?> updateExpense(@PathVariable Long id, @RequestBody ExpenseDTO expenseDTO, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.findUserByUsername(userDetails.getUsername());
@@ -65,6 +77,7 @@ public class ExpenseController {
         return ResponseEntity.ok(new ExpenseDTO(existingExpense.getId(), existingExpense.getAmount(), existingExpense.getDescription(), existingExpense.getDate(), existingExpense.getUser().getId()));
     }
 
+    // Delete an existing expense for the logged-in user
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteExpense(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.findUserByUsername(userDetails.getUsername());

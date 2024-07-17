@@ -1,9 +1,5 @@
 package com.example.finals.controller;
 
-import com.example.finals.model.User;
-import com.example.finals.security.CustomUserDetailsService;
-import com.example.finals.security.JwtUtil;
-import com.example.finals.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -17,14 +13,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.example.finals.model.User;
+import com.example.finals.security.CustomUserDetailsService;
+import com.example.finals.security.JwtUtil;
+import com.example.finals.service.UserService;
 
+// RestController for handling authentication and user registration requests
 @RestController
 @RequestMapping("/api")
 public class AuthenticationController {
-
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -42,7 +39,7 @@ public class AuthenticationController {
     @Qualifier("passwordEncoder")
     private PasswordEncoder passwordEncoder;
 
-    // Response class to encapsulate JWT in a structured JSON
+    // Inner class to encapsulate the JWT in a structured JSON response
     private static class JwtResponse {
         private final String jwt;
 
@@ -55,30 +52,34 @@ public class AuthenticationController {
         }
     }
 
+    // Endpoint for handling user authentication requests
     @PostMapping("/authenticate")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody User user) throws Exception {
-        logger.debug("Attempting to authenticate user: {}", user.getUsername());
         try {
+            // Authenticate username and password
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
         } catch (BadCredentialsException e) {
-            logger.error("Invalid credentials for user: {}", user.getUsername());
+            // Return 401 status if authentication fails
             return ResponseEntity.status(401).body("Incorrect username or password");
         }
 
+        // Generate JWT for the successfully authenticated user
         final UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         final String jwt = jwtUtil.generateToken(userDetails);
 
-        logger.debug("User authenticated successfully: {}", user.getUsername());
-        return ResponseEntity.ok(new JwtResponse(jwt)); // Return JWT wrapped in JSON
+        // Return JWT in the response body
+        return ResponseEntity.ok(new JwtResponse(jwt));
     }
 
+    // Endpoint for handling user registration requests
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
-        logger.debug("Registering new user: {}", user.getUsername());
+        // Encode user password
         String encodedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encodedPassword);
+        // Save the new user
         User newUser = userService.saveUser(user);
-        logger.debug("User registered successfully: {}", user.getUsername());
+        // Return the newly created user details
         return ResponseEntity.ok(newUser);
     }
 }
